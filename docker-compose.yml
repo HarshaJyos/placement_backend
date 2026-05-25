@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  # 1. Database Layer: PostgreSQL 16
+  db:
+    image: postgres:16-alpine
+    container_name: placement_platform_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: placement_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Caching & Queue Layer: Redis 7
+  redis:
+    image: redis:7-alpine
+    container_name: placement_platform_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. Application Server Layer
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: placement_platform_api
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/placement_platform?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_ACCESS_SECRET=super-secret-jwt-access-signature-token-key-2026
+      - JWT_REFRESH_SECRET=super-secret-jwt-refresh-rotation-signature-key-2026
+      - OTP_HMAC_SECRET=super-secret-otp-hmac-sha256-cryptographic-hash-key-2026
+      - R2_ACCESS_KEY_ID=r2-sample-access-key-id
+      - R2_SECRET_ACCESS_KEY=r2-sample-secret-access-key
+      - R2_ENDPOINT=https://account-id.r2.cloudflarestorage.com
+      - R2_BUCKET_NAME=placement-platform-uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

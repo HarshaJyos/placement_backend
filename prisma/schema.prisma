@@ -1,0 +1,466 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  COMPANY_ADMIN
+  PLACEMENT_OFFICER
+  COLLEGE_ADMIN
+  UNIVERSITY_ADMIN
+  SUPER_ADMIN
+}
+
+enum PlacementStatus {
+  UNPLACED
+  PLACED
+  OPTED_OUT
+}
+
+enum ProficiencyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum DriveStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum JobType {
+  FULL_TIME
+  INTERNSHIP
+  CONTRACT
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  SELECTED
+  REJECTED
+  WITHDRAWN
+  ON_HOLD
+}
+
+enum InterviewRoundType {
+  APTITUDE
+  TECHNICAL
+  HR
+  CASE_STUDY
+  GROUP_DISCUSSION
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum FeedbackDecision {
+  PASS
+  FAIL
+  HOLD
+}
+
+model User {
+  id                  String                 @id @default(uuid()) @db.Uuid
+  email               String                 @unique
+  passwordHash        String
+  role                Role
+  collegeId           String?                @db.Uuid
+  companyId           String?                @db.Uuid
+  avatarUrl           String?
+  isActive            Boolean                @default(true)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  // Relations
+  universityAdmins    UniversityAdmin[]
+  placementOfficers   PlacementOfficer[]
+  students            Student[]
+  companyAdmins       CompanyAdmin[]
+  statusLogsChanged   ApplicationStatusLog[]
+  feedbacksWritten    InterviewFeedback[]
+  auditLogs           AuditLog[]
+  loginSessions       LoginSession[]
+}
+
+model LoginSession {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  device            String
+  ip                String
+  location          String?
+  lastActive        DateTime  @default(now())
+  familyId          String    // For Refresh Token Rotation families
+  tokenHash         String    // Refresh token hash
+  isRevoked         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+
+  user              User      @relation(fields: [userId], references: [id])
+}
+
+model University {
+  id            String             @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String             @unique
+  domain        String
+  address       String
+  contactEmail  String
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+
+  colleges      College[]
+  admins        UniversityAdmin[]
+}
+
+model UniversityAdmin {
+  id           String     @id @default(uuid()) @db.Uuid
+  universityId String     @db.Uuid
+  userId       String     @db.Uuid
+  role         String     // e.g. "super_admin"
+  createdAt    DateTime   @default(now())
+
+  university   University @relation(fields: [universityId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+}
+
+model College {
+  id           String             @id @default(uuid()) @db.Uuid
+  universityId String             @db.Uuid
+  name         String
+  code         String             @unique
+  address      String
+  tpoEmail     String
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+
+  university   University         @relation(fields: [universityId], references: [id])
+  departments  Department[]
+  officers     PlacementOfficer[]
+  drives       PlacementDrive[]
+  students     Student[]
+}
+
+model Department {
+  id        String    @id @default(uuid()) @db.Uuid
+  collegeId String    @db.Uuid
+  name      String
+  code      String
+  seatCount Int
+  createdAt DateTime  @default(now())
+
+  college   College   @relation(fields: [collegeId], references: [id])
+  students  Student[]
+}
+
+model PlacementOfficer {
+  id          String           @id @default(uuid()) @db.Uuid
+  collegeId   String           @db.Uuid
+  userId      String           @db.Uuid
+  designation String
+  phone       String
+  createdAt   DateTime         @default(now())
+
+  college     College          @relation(fields: [collegeId], references: [id])
+  user        User             @relation(fields: [userId], references: [id])
+  drives      PlacementDrive[]
+}
+
+model Student {
+  id              String           @id @default(uuid()) @db.Uuid
+  userId          String           @db.Uuid
+  departmentId    String           @db.Uuid
+  collegeId       String           @db.Uuid
+  rollNumber      String           @unique
+  fullName        String
+  batchYear       Int
+  cgpa            Float
+  backlogs        Int              @default(0)
+  phone           String
+  placementStatus PlacementStatus  @default(UNPLACED)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+
+  user            User             @relation(fields: [userId], references: [id])
+  department      Department       @relation(fields: [departmentId], references: [id])
+  college         College          @relation(fields: [collegeId], references: [id])
+  profile         StudentProfile?
+  resumes         Resume[]
+  skills          StudentSkill[]
+  applications    Application[]
+  notifications   Notification[]
+}
+
+model StudentProfile {
+  id                String   @id @default(uuid()) @db.Uuid
+  studentId         String   @unique @db.Uuid
+  linkedinUrl       String?
+  githubUrl         String?
+  portfolioUrl      String?
+  bio               String?
+  currentCity       String?
+  isProfileComplete Boolean  @default(false)
+  updatedAt         DateTime @updatedAt
+
+  student           Student  @relation(fields: [studentId], references: [id])
+}
+
+model Resume {
+  id           String        @id @default(uuid()) @db.Uuid
+  studentId    String        @db.Uuid
+  fileUrl      String
+  fileName     String
+  versionLabel String
+  isDefault    Boolean       @default(false)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+
+  student      Student       @relation(fields: [studentId], references: [id])
+  applications Application[]
+}
+
+model Skill {
+  id        String         @id @default(uuid()) @db.Uuid
+  name      String         @unique
+  category  String
+  isActive  Boolean        @default(true)
+
+  students  StudentSkill[]
+  jobs      JobSkill[]
+}
+
+model StudentSkill {
+  id               String           @id @default(uuid()) @db.Uuid
+  studentId        String           @db.Uuid
+  skillId          String           @db.Uuid
+  proficiencyLevel ProficiencyLevel
+  createdAt        DateTime         @default(now())
+
+  student          Student          @relation(fields: [studentId], references: [id])
+  skill            Skill            @relation(fields: [skillId], references: [id])
+
+  @@unique([studentId, skillId])
+}
+
+model Company {
+  id            String          @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String          @unique
+  industry      String
+  website       String
+  logoUrl       String?
+  hqLocation    String
+  isVerified    Boolean         @default(false)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+
+  profile       CompanyProfile?
+  admins        CompanyAdmin[]
+  jobs          JobPost[]
+}
+
+model CompanyProfile {
+  id            String   @id @default(uuid()) @db.Uuid
+  companyId     String   @unique @db.Uuid
+  description   String
+  employeeCount Int
+  linkedinUrl   String?
+  updatedAt     DateTime @updatedAt
+
+  company       Company  @relation(fields: [companyId], references: [id])
+}
+
+model CompanyAdmin {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @db.Uuid
+  userId    String   @db.Uuid
+  role      String   // e.g. "recruiter", "admin"
+  createdAt DateTime @default(now())
+
+  company   Company  @relation(fields: [companyId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model PlacementDrive {
+  id          String      @id @default(uuid()) @db.Uuid
+  collegeId   String      @db.Uuid
+  officerId   String      @db.Uuid
+  title       String
+  startDate   DateTime
+  endDate     DateTime
+  status      DriveStatus @default(DRAFT)
+  description String
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  college     College     @relation(fields: [collegeId], references: [id])
+  officer     PlacementOfficer @relation(fields: [officerId], references: [id])
+  jobs        JobPost[]
+}
+
+model JobPost {
+  id                 String          @id @default(uuid()) @db.Uuid
+  companyId          String          @db.Uuid
+  placementDriveId   String          @db.Uuid
+  title              String
+  jobType            JobType
+  location           String
+  ctcMin             Decimal         @db.Decimal(10, 2)
+  ctcMax             Decimal         @db.Decimal(10, 2)
+  description        String
+  applicationDeadline DateTime
+  maxApplications    Int
+  status             JobStatus       @default(DRAFT)
+  isActive           Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+
+  company            Company         @relation(fields: [companyId], references: [id])
+  drive              PlacementDrive  @relation(fields: [placementDriveId], references: [id])
+  eligibility        JobEligibility?
+  skills             JobSkill[]
+  applications       Application[]
+}
+
+model JobEligibility {
+  id             String   @id @default(uuid()) @db.Uuid
+  jobId          String   @unique @db.Uuid
+  minCgpa        Float
+  maxBacklogs    Int
+  allowedBranches String   // JSON array of strings
+  batchYearFrom  Int
+  batchYearTo    Int
+  createdAt      DateTime @default(now())
+
+  job            JobPost  @relation(fields: [jobId], references: [id])
+}
+
+model JobSkill {
+  id          String   @id @default(uuid()) @db.Uuid
+  jobId       String   @db.Uuid
+  skillId     String   @db.Uuid
+  isMandatory Boolean  @default(true)
+
+  job         JobPost  @relation(fields: [jobId], references: [id])
+  skill       Skill    @relation(fields: [skillId], references: [id])
+
+  @@unique([jobId, skillId])
+}
+
+model Application {
+  id            String            @id @default(uuid()) @db.Uuid
+  studentId     String            @db.Uuid
+  jobId         String            @db.Uuid
+  resumeId      String            @db.Uuid
+  currentStatus ApplicationStatus @default(APPLIED)
+  coverNote     String?
+  isActive      Boolean           @default(true)
+  appliedAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  student       Student           @relation(fields: [studentId], references: [id])
+  job           JobPost           @relation(fields: [jobId], references: [id])
+  resume        Resume            @relation(fields: [resumeId], references: [id])
+  statusLogs    ApplicationStatusLog[]
+  interviews    InterviewRound[]
+  offerLetter   OfferLetter?
+}
+
+model ApplicationStatusLog {
+  id            String            @id @default(uuid()) @db.Uuid
+  applicationId String            @db.Uuid
+  changedBy     String            @db.Uuid
+  fromStatus    ApplicationStatus
+  toStatus      ApplicationStatus
+  remarks       String?
+  changedAt     DateTime          @default(now())
+
+  application   Application       @relation(fields: [applicationId], references: [id])
+  user          User              @relation(fields: [changedBy], references: [id])
+}
+
+model InterviewRound {
+  id             String             @id @default(uuid()) @db.Uuid
+  applicationId  String             @db.Uuid
+  roundNumber    Int
+  roundType      InterviewRoundType
+  scheduledAt    DateTime
+  venueOrLink    String
+  status         InterviewStatus    @default(SCHEDULED)
+  createdAt      DateTime           @default(now())
+
+  application    Application        @relation(fields: [applicationId], references: [id])
+  feedbacks      InterviewFeedback[]
+}
+
+model InterviewFeedback {
+  id            String           @id @default(uuid()) @db.Uuid
+  roundId       String           @db.Uuid
+  interviewerId String           @db.Uuid
+  rating        Int
+  remarks       String
+  decision      FeedbackDecision
+  createdAt     DateTime         @db.Timestamp()
+
+  round         InterviewRound   @relation(fields: [roundId], references: [id])
+  interviewer   User             @relation(fields: [interviewerId], references: [id])
+}
+
+model OfferLetter {
+  id            String      @id @default(uuid()) @db.Uuid
+  applicationId String      @unique @db.Uuid
+  designation   String
+  ctc           Decimal     @db.Decimal(10, 2)
+  joiningDate   DateTime
+  fileUrl       String
+  isAccepted    Boolean?    // null = pending, true = accepted, false = rejected
+  issuedAt      DateTime    @default(now())
+
+  application   Application @relation(fields: [applicationId], references: [id])
+}
+
+model Notification {
+  id           String   @id @default(uuid()) @db.Uuid
+  studentId    String   @db.Uuid
+  type         String
+  title        String
+  body         String
+  isRead       Boolean  @default(false)
+  refEntity    String?
+  refEntityId  String?  @db.Uuid
+  createdAt    DateTime @default(now())
+
+  student      Student  @relation(fields: [studentId], references: [id])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String?  @db.Uuid
+  action         String   // e.g. "CREATE_JOB", "UPDATE_APPLICATION_STATUS"
+  entity         String   // e.g. "JobPost", "Application"
+  entityId       String?  @db.Uuid
+  ip             String
+  beforeSnapshot Json?
+  afterSnapshot  Json?
+  timestamp      DateTime @default(now())
+
+  user           User?    @relation(fields: [userId], references: [id])
+}
