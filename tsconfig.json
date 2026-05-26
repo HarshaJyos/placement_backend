@@ -18,7 +18,8 @@
       "cookie-parser",
       "cors",
       "multer",
-      "uuid"
+      "uuid",
+      "swagger-ui-express"
     ]
   },
   "include": ["src/**/*"]

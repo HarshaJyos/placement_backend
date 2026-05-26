@@ -22,6 +22,7 @@ import notificationRouter from "./modules/notification/route";
 import adminRouter from "./modules/admin/route";
 import asyncJobRouter from "./modules/async-job/route";
 import healthRouter from "./modules/health/route";
+import swaggerRouter from "./lib/swagger";
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.get("/health", (req, res) => {
 });
 
 // Domain Routes Registrations
+app.use("/api-docs", swaggerRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/students", studentRouter);
