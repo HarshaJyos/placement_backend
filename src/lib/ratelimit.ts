@@ -61,7 +61,7 @@ export const rateLimiter = (options: RateLimitOptions) => {
       }
 
       // Extract card of set after removing old scores
-      const currentRequestCount = (results[1] as number) + 1; // Include the current request
+      const currentRequestCount = (results[1] as unknown as number) + 1; // Include the current request
 
       const remaining = Math.max(0, options.max - currentRequestCount);
       const resetTime = now + options.windowMs;

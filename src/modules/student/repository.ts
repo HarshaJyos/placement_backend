@@ -47,7 +47,7 @@ export class StudentRepository {
     studentId: string,
     data: CompleteStudentProfileDTO
   ): Promise<Student> {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       // 1. Update Student Table
       const student = await tx.student.update({
         where: { id: studentId },
@@ -190,7 +190,7 @@ export class StudentRepository {
     
     // Group applications by status count
     const applicationsByStatus: Record<string, number> = {};
-    applications.forEach((app) => {
+    applications.forEach((app: any) => {
       const status = app.currentStatus;
       applicationsByStatus[status] = (applicationsByStatus[status] || 0) + 1;
     });
@@ -223,7 +223,7 @@ export class StudentRepository {
     return {
       applicationsTotal,
       applicationsByStatus,
-      upcomingInterviews: upcomingInterviews.map((i) => ({
+      upcomingInterviews: upcomingInterviews.map((i: any) => ({
         id: i.id,
         round_number: i.roundNumber,
         round_type: i.roundType,

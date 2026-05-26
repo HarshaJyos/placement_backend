@@ -45,3 +45,11 @@ export interface ApplicationSearchFilter {
   sort_by?: "appliedAt" | "updatedAt";
   sort_order?: "asc" | "desc";
 }
+
+export interface BulkUpdateApplicationStatusDTO {
+  application_ids: string[];
+  new_status: ApplicationStatus;
+  remarks?: string;
+  notify_students?: boolean;
+}
+

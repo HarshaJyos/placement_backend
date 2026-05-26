@@ -38,7 +38,7 @@ const processBackgroundJob = async (job: Job): Promise<void> => {
         // Batch insert notification records in DB
         if (students.length > 0) {
           await prisma.notification.createMany({
-            data: students.map((s) => ({
+            data: students.map((s: any) => ({
               studentId: s.id,
               type: "JOB_ALERT",
               title: "New Job Posting Published!",

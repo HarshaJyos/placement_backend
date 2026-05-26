@@ -6,7 +6,7 @@ import { paginate, PaginatedResult } from "../../lib/paginate";
 export class JobRepository {
   // Atomically creates a JobPost, Eligibility, and mandatory Skill parameters
   async createJob(companyId: string, data: CreateJobPostDTO): Promise<JobPost> {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       // 1. Create Job Post
       const job = await tx.jobPost.create({
         data: {
@@ -81,7 +81,7 @@ export class JobRepository {
 
   // Atomically updates job configurations
   async updateJob(jobId: string, data: UpdateJobPostDTO): Promise<JobPost> {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       // Update core JobPost fields
       const coreData: any = {};
       if (data.title) coreData.title = data.title;

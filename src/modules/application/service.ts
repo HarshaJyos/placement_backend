@@ -9,6 +9,7 @@ import {
   SubmitFeedbackDTO,
   IssueOfferDTO,
   ApplicationSearchFilter,
+  BulkUpdateApplicationStatusDTO,
 } from "./types";
 import {
   BadRequestError,
@@ -504,6 +505,88 @@ export class ApplicationService {
   // Lists applications
   async listApplications(filters: ApplicationSearchFilter): Promise<PaginatedResult<Application>> {
     return applicationRepository.listApplications(filters);
+  }
+
+  // Bulk status update wrapping everything in a transaction with status logs & BullMQ
+  async bulkUpdateStatus(
+    updaterId: string,
+    updaterRole: Role,
+    updaterCompanyId: string | null,
+    dto: BulkUpdateApplicationStatusDTO
+  ): Promise<{ updated: number; failed: number; notifications_queued: number }> {
+    const { application_ids, new_status, remarks, notify_students } = dto;
+
+    let updatedCount = 0;
+    let failedCount = 0;
+    let notificationsQueued = 0;
+
+    await prisma.$transaction(async (tx) => {
+      for (const appId of application_ids) {
+        const app = await tx.application.findFirst({
+          where: { id: appId, isActive: true },
+          include: {
+            job: true,
+            student: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        });
+
+        if (!app) {
+          failedCount++;
+          continue;
+        }
+
+        // Access check: Recruiter must own the job post
+        if (updaterRole === Role.COMPANY_ADMIN && app.job.companyId !== updaterCompanyId) {
+          failedCount++;
+          continue;
+        }
+
+        // Verify machine transition limits
+        this.validateTransition(app.currentStatus, new_status);
+
+        // Update status
+        await tx.application.update({
+          where: { id: appId },
+          data: { currentStatus: new_status },
+        });
+
+        // Create log entry
+        await tx.applicationStatusLog.create({
+          data: {
+            applicationId: appId,
+            changedBy: updaterId,
+            fromStatus: app.currentStatus,
+            toStatus: new_status,
+            remarks: remarks || "Bulk status update",
+          },
+        });
+
+        updatedCount++;
+
+        if (notify_students) {
+          // Queue dynamic candidate alert
+          await addJobToQueue("BULK_NOTIFY", {
+            type: "APPLICATION_STATUS_UPDATED",
+            applicationId: appId,
+            studentEmail: app.student.user.email,
+            jobTitle: app.job.title,
+            status: new_status,
+            remarks: remarks,
+          });
+          notificationsQueued++;
+        }
+      }
+    });
+
+    return {
+      updated: updatedCount,
+      failed: failedCount,
+      notifications_queued: notificationsQueued,
+    };
   }
 }
 export const applicationService = new ApplicationService();

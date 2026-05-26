@@ -126,7 +126,7 @@ export class StudentService {
 
     // Filter job eligibility server-side
     const recommendedJobs = openJobs
-      .filter((job) => {
+      .filter((job: any) => {
         const el = job.eligibility;
         if (!el) return true; // No eligibility defined = open to all
 
@@ -153,7 +153,7 @@ export class StudentService {
         return true;
       })
       .slice(0, 5)
-      .map((job) => ({
+      .map((job: any) => ({
         id: job.id,
         title: job.title,
         job_type: job.jobType,

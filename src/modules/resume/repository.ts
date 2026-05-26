@@ -22,7 +22,7 @@ export class ResumeRepository {
       isDefault: boolean;
     }
   ): Promise<Resume> {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       if (data.isDefault) {
         // Set all other active resumes to non-default
         await tx.resume.updateMany({
@@ -69,7 +69,7 @@ export class ResumeRepository {
 
   // Sets a specific resume as default, resetting others transactionally
   async setDefaultResume(studentId: string, resumeId: string): Promise<void> {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Clear other defaults
       await tx.resume.updateMany({
         where: { studentId, isActive: true },

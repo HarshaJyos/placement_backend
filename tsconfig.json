@@ -10,7 +10,16 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "types": [
+      "node",
+      "express",
+      "jsonwebtoken",
+      "cookie-parser",
+      "cors",
+      "multer",
+      "uuid"
+    ]
   },
   "include": ["src/**/*"]
 }

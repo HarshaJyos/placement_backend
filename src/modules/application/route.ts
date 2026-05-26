@@ -12,6 +12,7 @@ import {
   issueOfferSchema,
   respondOfferSchema,
   applicationSearchSchema,
+  bulkUpdateApplicationStatusSchema,
 } from "./schema";
 import { Role } from "@prisma/client";
 import { z } from "zod";
@@ -68,6 +69,16 @@ router.patch(
   rateLimiter(STANDARD_LIMIT),
   validateParams(uuidParamSchema),
   applicationController.withdraw
+);
+
+// 7.5 Bulk Update Application Status (company/officer)
+router.patch(
+  "/bulk-status",
+  requireAuth,
+  requireRole(Role.COMPANY_ADMIN, Role.PLACEMENT_OFFICER),
+  rateLimiter(STANDARD_LIMIT),
+  validateBody(bulkUpdateApplicationStatusSchema),
+  applicationController.bulkUpdateStatus
 );
 
 // 7.6 Update application hiring stage (APPLIED -> UNDER_REVIEW -> SHORTLISTED, etc.)

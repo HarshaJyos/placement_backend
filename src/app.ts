@@ -13,6 +13,15 @@ import resumeRouter from "./modules/resume/route";
 import companyRouter from "./modules/company/route";
 import jobRouter from "./modules/job/route";
 import applicationRouter from "./modules/application/route";
+import interviewRouter from "./modules/interview/route";
+import offerRouter from "./modules/offer/route";
+import driveRouter from "./modules/drive/route";
+import collegeRouter from "./modules/college/route";
+import skillRouter from "./modules/skill/route";
+import notificationRouter from "./modules/notification/route";
+import adminRouter from "./modules/admin/route";
+import asyncJobRouter from "./modules/async-job/route";
+import healthRouter from "./modules/health/route";
 
 const app = express();
 
@@ -73,6 +82,15 @@ app.use("/api/resumes", resumeRouter);
 app.use("/api/companies", companyRouter);
 app.use("/api/jobs", jobRouter);
 app.use("/api/applications", applicationRouter);
+app.use("/api/interviews", interviewRouter);
+app.use("/api/offers", offerRouter);
+app.use("/api/drives", driveRouter);
+app.use("/api/colleges", collegeRouter);
+app.use("/api/skills", skillRouter);
+app.use("/api/notifications", notificationRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/async-jobs", asyncJobRouter);
+app.use("/api/health", healthRouter);
 
 // Catch-all Wildcard Route Handler for unmatched paths
 app.use("*", (req, res, next) => {

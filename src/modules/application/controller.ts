@@ -255,5 +255,30 @@ export class ApplicationController {
       next(error);
     }
   }
+
+  // Bulk status update method
+  async bulkUpdateStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const role = req.user!.role;
+      const companyId = req.user!.companyId;
+
+      const result = await applicationService.bulkUpdateStatus(
+        userId,
+        role,
+        companyId,
+        req.body
+      );
+
+      res.status(200).json({
+        success: true,
+        updated: result.updated,
+        failed: result.failed,
+        notifications_queued: result.notifications_queued,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 export const applicationController = new ApplicationController();

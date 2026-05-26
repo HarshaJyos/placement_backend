@@ -74,3 +74,20 @@ export const applicationSearchSchema = z.object({
   sort_by: z.enum(["appliedAt", "updatedAt"]).default("appliedAt"),
   sort_order: z.enum(["asc", "desc"]).default("desc"),
 });
+
+export const bulkUpdateApplicationStatusSchema = z.object({
+  application_ids: z.array(z.string().uuid("Invalid application UUID format")),
+  new_status: z.enum([
+    ApplicationStatus.APPLIED,
+    ApplicationStatus.UNDER_REVIEW,
+    ApplicationStatus.SHORTLISTED,
+    ApplicationStatus.INTERVIEW_SCHEDULED,
+    ApplicationStatus.SELECTED,
+    ApplicationStatus.REJECTED,
+    ApplicationStatus.WITHDRAWN,
+    ApplicationStatus.ON_HOLD,
+  ]),
+  remarks: z.string().max(500, "Remarks must be under 500 characters").optional(),
+  notify_students: z.boolean().optional().default(true),
+});
+
