@@ -15,8 +15,16 @@ const swaggerSpec = {
   },
   servers: [
     {
+      url: "/",
+      description: "Current Host Server (Default Relative)",
+    },
+    {
+      url: "https://placement-api-324161304253.asia-south1.run.app",
+      description: "Cloud Run Production Server",
+    },
+    {
       url: "http://localhost:5000",
-      description: "Development Server",
+      description: "Local Development Server",
     },
   ],
   tags: [

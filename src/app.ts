@@ -46,7 +46,10 @@ app.use(
 // Enable CORS
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: (origin, callback) => {
+      // Dynamic origin reflection allows credentials (cookies) across any host (Vercel, Localhost, Cloud Run)
+      callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-request-id", "x-device-fingerprint"],
