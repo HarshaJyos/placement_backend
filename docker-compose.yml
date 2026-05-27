@@ -76,6 +76,11 @@ services:
       R2_ENDPOINT: ${R2_ENDPOINT}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME}
 
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+
     depends_on:
       db:
         condition: service_healthy

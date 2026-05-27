@@ -12,11 +12,36 @@ const passwordValidation = z
     "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
   );
 
-export const initiateRegisterSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  role: z.enum([Role.STUDENT, Role.COMPANY_ADMIN, Role.PLACEMENT_OFFICER]),
-  college_code: z.string().min(2, "College code is required"),
-});
+export const initiateRegisterSchema = z
+  .object({
+    email: z.string().email("Invalid email format"),
+    role: z.enum([
+      Role.STUDENT,
+      Role.COMPANY_ADMIN,
+      Role.PLACEMENT_OFFICER,
+      Role.COLLEGE_ADMIN,
+      Role.UNIVERSITY_ADMIN,
+      Role.SUPER_ADMIN,
+    ]),
+    college_code: z.string().min(2, "College code is required").optional(),
+  })
+  .refine(
+    (data) => {
+      // If the registering role is directly associated with a specific college, college_code is strictly required.
+      if (
+        ([Role.STUDENT, Role.PLACEMENT_OFFICER, Role.COLLEGE_ADMIN] as string[]).includes(
+          data.role
+        )
+      ) {
+        return !!data.college_code;
+      }
+      return true;
+    },
+    {
+      message: "College code is required for college-specific roles (STUDENT, PLACEMENT_OFFICER, COLLEGE_ADMIN)",
+      path: ["college_code"],
+    }
+  );
 
 export const verifyRegisterSchema = z.object({
   otp_token: z.string().min(1, "OTP session token is required"),

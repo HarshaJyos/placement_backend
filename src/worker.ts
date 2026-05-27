@@ -1,6 +1,7 @@
 import { Job } from "bullmq";
 import { initializeWorker } from "./lib/queue";
 import { prisma } from "./lib/db";
+import { sendOtpEmail, sendPasswordResetEmail } from "./lib/email";
 
 // Background Job Processing Routing
 const processBackgroundJob = async (job: Job): Promise<void> => {
@@ -9,17 +10,9 @@ const processBackgroundJob = async (job: Job): Promise<void> => {
 
   switch (type) {
     case "SEND_EMAIL_OTP": {
-      // OTP Dispatch simulation (In production, wire to Resend/Nodemailer/Twilio)
       const { email, otpCode } = data;
-      console.log(`
-      --------------------------------------------------
-      [SMTP SIMULATION] DISPATCHING EMAIL OTP
-      To: ${email}
-      Subject: Placement Platform Verification Code
-      Body: Your verification security code is: ${otpCode}
-      Expires in: 5 minutes
-      --------------------------------------------------
-      `);
+      console.log(`[Worker] Dispatching real OTP email to: ${email}`);
+      await sendOtpEmail(email, otpCode);
       break;
     }
 
@@ -85,6 +78,10 @@ const processBackgroundJob = async (job: Job): Promise<void> => {
             },
           });
         }
+      } else if (notifyType === "PASSWORD_RESET") {
+        const { email, resetLink } = data;
+        console.log(`[Worker] Dispatching real Password Reset email to: ${email}`);
+        await sendPasswordResetEmail(email, resetLink);
       }
       break;
     }

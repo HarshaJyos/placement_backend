@@ -19,7 +19,8 @@
       "cors",
       "multer",
       "uuid",
-      "swagger-ui-express"
+      "swagger-ui-express",
+      "nodemailer"
     ]
   },
   "include": ["src/**/*"]

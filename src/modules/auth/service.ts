@@ -30,11 +30,10 @@ export class AuthService {
       .digest("hex");
   }
 
-  // Initiates registration by generating a 6-digit OTP and returning a short-lived session token
   async initiateRegister(
     email: string,
     role: Role,
-    collegeCode: string
+    collegeCode?: string
   ): Promise<{ otpToken: string; expiresIn: number }> {
     // Check if user already exists
     const existingUser = await authRepository.findByEmail(email);
@@ -42,10 +41,18 @@ export class AuthService {
       throw new ConflictError("A user with this email address already exists");
     }
 
-    // Verify college validity
-    const college = await authRepository.findCollegeByCode(collegeCode);
-    if (!college) {
-      throw new BadRequestError("Invalid college authorization code");
+    let collegeId: string | null = null;
+
+    // Verify college validity if role is college-specific
+    if (([Role.STUDENT, Role.PLACEMENT_OFFICER, Role.COLLEGE_ADMIN] as string[]).includes(role)) {
+      if (!collegeCode) {
+        throw new BadRequestError("College code is required for college-specific roles");
+      }
+      const college = await authRepository.findCollegeByCode(collegeCode);
+      if (!college) {
+        throw new BadRequestError("Invalid college authorization code");
+      }
+      collegeId = college.id;
     }
 
     // Generate a secure 6-digit numeric OTP
@@ -58,7 +65,7 @@ export class AuthService {
       {
         email,
         role,
-        collegeId: college.id,
+        collegeId,
         otpCodeHash,
         timestamp,
       },
