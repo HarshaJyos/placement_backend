@@ -8,7 +8,7 @@ import { StudentSearchFilter } from "../student/types";
 export class CollegeService {
   // Registers a new college record
   async registerCollege(dto: {
-    university_id: string;
+    university_id?: string;
     name: string;
     code: string;
     address: string;
@@ -24,16 +24,37 @@ export class CollegeService {
       throw new ConflictError(`A college with code '${code}' already exists`);
     }
 
-    const university = await prisma.university.findUnique({
-      where: { id: university_id },
-    });
-    if (!university) {
-      throw new NotFoundError("University record not found");
+    let targetUniversityId = university_id;
+
+    if (!targetUniversityId) {
+      // Find or create the default university
+      let university = await prisma.university.findFirst();
+      if (!university) {
+        university = await prisma.university.create({
+          data: {
+            name: "Placement Platform University",
+            slug: "placement-platform-university",
+            domain: "university.edu",
+            address: "University Campus, Shamshabad, Hyderabad",
+            contactEmail: "admin@university.edu",
+          },
+        });
+      }
+      targetUniversityId = university.id;
+    } else {
+      // Verify university validity if one was supplied
+      const university = await prisma.university.findUnique({
+        where: { id: university_id },
+      });
+      if (!university) {
+        throw new NotFoundError("University record not found");
+      }
+      targetUniversityId = university.id;
     }
 
     return prisma.college.create({
       data: {
-        universityId: university_id,
+        universityId: targetUniversityId,
         name,
         code,
         address,

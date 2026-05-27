@@ -88,9 +88,10 @@ const swaggerSpec = {
                 properties: {
                   email: { type: "string", format: "email", default: "haneesh0769@gmail.com", description: "Unique register email address" },
                   role: { type: "string", enum: ["STUDENT", "COMPANY_ADMIN", "PLACEMENT_OFFICER", "COLLEGE_ADMIN", "UNIVERSITY_ADMIN", "SUPER_ADMIN"], default: "STUDENT", description: "Target role of user" },
-                  college_code: { type: "string", default: "VJIT-2024", description: "College Code for enrollment link check" },
+                  college_code: { type: "string", default: "VJIT-2024", description: "College Code (required for college-specific roles STUDENT, PLACEMENT_OFFICER, COLLEGE_ADMIN)" },
+                  admin_invite_code: { type: "string", default: "Solvempire@1323", description: "Admin invite code (required for administrative roles SUPER_ADMIN, UNIVERSITY_ADMIN)" },
                 },
-                required: ["email", "role", "college_code"],
+                required: ["email", "role"],
               },
             },
           },
@@ -1806,13 +1807,13 @@ const swaggerSpec = {
               schema: {
                 type: "object",
                 properties: {
-                  university_id: { type: "string", example: "uuid-university", description: "Reference Parent University UUID" },
+                  university_id: { type: "string", example: "uuid-university", description: "Optional Reference Parent University UUID. Auto-generated on backend if omitted." },
                   name: { type: "string", example: "Vardhaman College of Engineering", description: "Campus name identifier" },
                   code: { type: "string", example: "VJIT-2024", description: "Unique campus enrollment verification code" },
                   address: { type: "string", example: "Kacharam, Shamshabad, Hyderabad", description: "Office address details" },
                   tpo_email: { type: "string", format: "email", example: "tpo@vjit.ac.in", description: "Primary Placement Officer email contact" },
                 },
-                required: ["university_id", "name", "code", "address", "tpo_email"],
+                required: ["name", "code", "address", "tpo_email"],
               },
             },
           },

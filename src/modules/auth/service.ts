@@ -33,12 +33,21 @@ export class AuthService {
   async initiateRegister(
     email: string,
     role: Role,
-    collegeCode?: string
+    collegeCode?: string,
+    adminInviteCode?: string
   ): Promise<{ otpToken: string; expiresIn: number }> {
     // Check if user already exists
     const existingUser = await authRepository.findByEmail(email);
     if (existingUser) {
       throw new ConflictError("A user with this email address already exists");
+    }
+
+    // Verify invitation code for administrative roles
+    if (([Role.SUPER_ADMIN, Role.UNIVERSITY_ADMIN] as string[]).includes(role)) {
+      const systemInviteCode = process.env.ADMIN_INVITE_CODE || "Solvempire@1323";
+      if (!adminInviteCode || adminInviteCode !== systemInviteCode) {
+        throw new ForbiddenError("Invalid or missing administrator invitation code");
+      }
     }
 
     let collegeId: string | null = null;

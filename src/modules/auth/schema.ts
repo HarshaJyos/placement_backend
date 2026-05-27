@@ -24,6 +24,7 @@ export const initiateRegisterSchema = z
       Role.SUPER_ADMIN,
     ]),
     college_code: z.string().min(2, "College code is required").optional(),
+    admin_invite_code: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -40,6 +41,19 @@ export const initiateRegisterSchema = z
     {
       message: "College code is required for college-specific roles (STUDENT, PLACEMENT_OFFICER, COLLEGE_ADMIN)",
       path: ["college_code"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If the registering role is administrative, admin_invite_code is strictly required.
+      if (([Role.SUPER_ADMIN, Role.UNIVERSITY_ADMIN] as string[]).includes(data.role)) {
+        return !!data.admin_invite_code;
+      }
+      return true;
+    },
+    {
+      message: "Admin invitation code is required to register as a platform administrator",
+      path: ["admin_invite_code"],
     }
   );
 

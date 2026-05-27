@@ -30,8 +30,8 @@ export class AuthController {
   // Initiates student/officer/recruiter onboarding verification
   async initiateRegister(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, role, college_code } = req.body;
-      const result = await authService.initiateRegister(email, role, college_code);
+      const { email, role, college_code, admin_invite_code } = req.body;
+      const result = await authService.initiateRegister(email, role, college_code, admin_invite_code);
       res.status(200).json({
         success: true,
         message: "OTP successfully sent to college email",
