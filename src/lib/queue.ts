@@ -2,12 +2,15 @@ import { Queue, Worker, Job } from "bullmq";
 import { redisClient } from "./redis";
 
 // Reuse the established Redis connection configuration
+const isTls = process.env.REDIS_URL ? process.env.REDIS_URL.startsWith("rediss:") : false;
+
 const connection = {
   host: process.env.REDIS_URL ? new URL(process.env.REDIS_URL).hostname : "127.0.0.1",
   port: process.env.REDIS_URL ? parseInt(new URL(process.env.REDIS_URL).port || "6379") : 6379,
   username: process.env.REDIS_URL ? new URL(process.env.REDIS_URL).username : undefined,
   password: process.env.REDIS_URL ? new URL(process.env.REDIS_URL).password : undefined,
   maxRetriesPerRequest: null,
+  tls: isTls ? {} : undefined,
 };
 
 // Create the central Placement Job Queue
